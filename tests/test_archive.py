@@ -57,6 +57,26 @@ class ArchiveTests(unittest.TestCase):
             self.assertEqual(result.destination.read_text(), "recording-data")
             self.assertFalse(source.exists())
 
+    def test_copy_recording_can_keep_source_when_auto_delete_is_disabled(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            source = tmp_path / "clip.mkv"
+            source.write_text("recording-data")
+            archive_root = tmp_path / "archive"
+
+            with patch("obs_auto_record.archive.FILE_STABLE_WINDOW_SEC", 0.0):
+                result = copy_recording(
+                    source,
+                    archive_root,
+                    "Game",
+                    timeout_sec=2,
+                    delete_source=False,
+                )
+
+            self.assertTrue(result.destination.exists())
+            self.assertEqual(result.destination.read_text(), "recording-data")
+            self.assertTrue(source.exists())
+
     def test_copy_recording_keeps_source_when_verification_fails(self) -> None:
         with TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)

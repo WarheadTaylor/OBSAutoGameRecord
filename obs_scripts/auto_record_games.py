@@ -15,6 +15,17 @@ SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+# OBS can keep imported project modules cached across script reloads.
+# Force fresh imports so local code changes are picked up reliably.
+for module_name in (
+    "obs_auto_record.archive",
+    "obs_auto_record.process_scan",
+    "obs_auto_record.session_engine",
+    "obs_auto_record.settings",
+    "obs_auto_record",
+):
+    sys.modules.pop(module_name, None)
+
 from obs_auto_record.archive import copy_recording
 from obs_auto_record.process_scan import iter_processes
 from obs_auto_record.session_engine import CopyRequest, DetectedMatch, SessionEngine
@@ -39,7 +50,7 @@ class ScriptState:
 def script_description() -> str:
     return (
         "Automatically starts OBS recording when configured game executables are detected, "
-        "stops after they exit, verifies the archived copy, and then deletes the original recording."
+        "stops after they exit, verifies the archived copy, and can optionally delete the original recording."
     )
 
 
@@ -47,6 +58,7 @@ def script_defaults(settings) -> None:
     obs.obs_data_set_default_bool(settings, "enabled", True)
     obs.obs_data_set_default_string(settings, "watch_list", "")
     obs.obs_data_set_default_string(settings, "archive_root", "")
+    obs.obs_data_set_default_bool(settings, "auto_delete_recordings", True)
     obs.obs_data_set_default_int(settings, "poll_interval_ms", 1000)
     obs.obs_data_set_default_int(settings, "exit_grace_period_sec", 10)
     obs.obs_data_set_default_int(settings, "copy_timeout_sec", 120)
@@ -65,6 +77,7 @@ def script_properties():
         "",
         None,
     )
+    obs.obs_properties_add_bool(properties, "auto_delete_recordings", "Auto Delete Original Recording")
     obs.obs_properties_add_int(properties, "poll_interval_ms", "Poll Interval Ms", 250, 60_000, 250)
     obs.obs_properties_add_int(properties, "exit_grace_period_sec", "Exit Grace Period Sec", 0, 600, 1)
     obs.obs_properties_add_int(properties, "copy_timeout_sec", "Copy Timeout Sec", 1, 3600, 1)
@@ -114,6 +127,7 @@ def _load_settings(obs_settings) -> ScriptSettings:
         enabled=obs.obs_data_get_bool(obs_settings, "enabled"),
         watch_entries=watch_entries,
         archive_root=archive_root,
+        auto_delete_recordings=obs.obs_data_get_bool(obs_settings, "auto_delete_recordings"),
         poll_interval_ms=max(250, obs.obs_data_get_int(obs_settings, "poll_interval_ms")),
         exit_grace_period_sec=max(0, obs.obs_data_get_int(obs_settings, "exit_grace_period_sec")),
         copy_timeout_sec=max(1, obs.obs_data_get_int(obs_settings, "copy_timeout_sec")),
@@ -223,22 +237,39 @@ def _submit_copy(copy_request: CopyRequest) -> None:
 
     timeout_sec = STATE.settings.copy_timeout_sec
     _log(f"Queueing archive copy for {last_recording} -> {copy_request.archive_subfolder}.")
-    STATE.executor.submit(_copy_worker, last_recording, archive_root, copy_request.archive_subfolder, timeout_sec)
+    STATE.executor.submit(
+        _copy_worker,
+        last_recording,
+        archive_root,
+        copy_request.archive_subfolder,
+        timeout_sec,
+        STATE.settings.auto_delete_recordings,
+    )
 
 
-def _copy_worker(source_path: str, archive_root: str, archive_subfolder: str, timeout_sec: int) -> None:
+def _copy_worker(
+    source_path: str,
+    archive_root: str,
+    archive_subfolder: str,
+    timeout_sec: int,
+    auto_delete_recordings: bool,
+) -> None:
     try:
         result = copy_recording(
             source_file=source_path,
             archive_root=archive_root,
             archive_subfolder=archive_subfolder,
             timeout_sec=timeout_sec,
+            delete_source=auto_delete_recordings,
         )
     except Exception as exc:  # pragma: no cover - exercised manually in OBS
         _warn(f"Archive operation failed for '{source_path}': {exc}")
         return
 
-    _log(f"Archived recording to {result.destination} and deleted the source file.")
+    if auto_delete_recordings:
+        _log(f"Archived recording to {result.destination} and deleted the source file.")
+    else:
+        _log(f"Archived recording to {result.destination}; the source file was kept.")
 
 
 def _get_last_recording_path() -> str:

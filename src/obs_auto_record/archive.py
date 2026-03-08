@@ -140,11 +140,13 @@ def copy_recording(
     archive_root: str | Path,
     archive_subfolder: str,
     timeout_sec: int,
+    delete_source: bool = True,
 ) -> ArchiveResult:
     source = wait_for_ready_file(source_file, timeout_sec=timeout_sec)
     destination = build_destination_path(source, archive_root, archive_subfolder)
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     verify_recording_copy(source, destination)
-    delete_recording_file(source, timeout_sec=timeout_sec)
+    if delete_source:
+        delete_recording_file(source, timeout_sec=timeout_sec)
     return ArchiveResult(source=source, destination=destination)

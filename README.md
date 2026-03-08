@@ -4,7 +4,7 @@ Windows-only OBS automation that:
 
 - starts recording when a configured game process launches
 - stops recording after the last matching game exits
-- verifies the archived copy and removes the original recording only after that succeeds
+- verifies the archived copy and can remove the original recording only after that succeeds
 
 The project is built as an OBS Python script.
 
@@ -99,6 +99,7 @@ After loading the script, configure these fields:
 - `Enabled`: turns automation on or off
 - `Watch List`: one game per line using `exe_name|archive_subfolder`
 - `Archive Root`: destination root for archived recordings
+- `Auto Delete Original Recording`: deletes the source recording after a verified archive copy succeeds
 - `Poll Interval Ms`: how often the script scans running processes
 - `Exit Grace Period Sec`: delay before stop after the last game exits
 - `Copy Timeout Sec`: max wait for OBS to finish writing, release, verify, and delete the recording file
@@ -144,7 +145,7 @@ cs2.exe|Counter-Strike 2
 <Archive Root>\<archive_subfolder>\<original_filename>
 ```
 
-7. The script verifies the copied file matches the source and then deletes the original recording.
+7. The script verifies the copied file matches the source and then deletes the original recording if `Auto Delete Original Recording` is enabled.
 
 If a file with the same name already exists, the script appends a timestamp before the extension.
 
@@ -170,6 +171,7 @@ cs2.exe|Counter-Strike 2
 ```
 
 - `Archive Root`: `D:\GameArchive`
+- `Auto Delete Original Recording`: `true`
 - `Poll Interval Ms`: `1000`
 - `Exit Grace Period Sec`: `10`
 - `Copy Timeout Sec`: `120`

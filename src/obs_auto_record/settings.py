@@ -28,6 +28,7 @@ class ScriptSettings:
     enabled: bool = True
     watch_entries: tuple[WatchEntry, ...] = ()
     archive_root: str = ""
+    auto_delete_recordings: bool = True
     poll_interval_ms: int = 1000
     exit_grace_period_sec: int = 10
     copy_timeout_sec: int = 120
@@ -88,4 +89,3 @@ def parse_watch_list(raw_watch_list: str, warn: Callable[[str], None] | None = N
         seen_exes.add(normalized_exe)
 
     return tuple(entries)
-
