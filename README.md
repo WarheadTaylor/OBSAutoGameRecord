@@ -6,7 +6,7 @@ Windows-only OBS automation that:
 - stops recording after the last matching game exits
 - verifies the archived copy and removes the original recording only after that succeeds
 
-The project is built as an OBS Python script with testable core modules under `src/`.
+The project is built as an OBS Python script.
 
 ## Project Layout
 
@@ -182,22 +182,6 @@ D:\GameArchive\Elden Ring\2026-03-07 20-14-11.mkv
 D:\GameArchive\Counter-Strike 2\2026-03-07 22-05-44.mkv
 ```
 
-## Running Tests
-
-The tests use Python's standard library `unittest`, so no extra test packages are required.
-
-From the project root:
-
-```powershell
-python -m unittest discover -s tests -p "test_*.py" -v
-```
-
-Optional syntax check:
-
-```powershell
-python -m compileall src tests obs_scripts
-```
-
 ## Troubleshooting
 
 ### OBS says Python is not configured
@@ -228,20 +212,3 @@ The script waits for the recording to stop changing, then retries briefly while 
 ### Manual recording behavior seems unchanged
 
 That is expected when you start recording manually before the watched game launches. The script avoids taking over recordings it did not start.
-
-## Current Limitations
-
-- Windows only
-- executable-name matching only; no generic “detect any game” logic
-- one recording session at a time
-- overlapping watched games keep the archive target from the first matched game in that session
-- the source file is deleted only after the archived copy passes verification
-
-## Relevant Files
-
-- [README.md](F:\GameRecording\README.md)
-- [auto_record_games.py](F:\GameRecording\obs_scripts\auto_record_games.py)
-- [settings.py](F:\GameRecording\src\obs_auto_record\settings.py)
-- [process_scan.py](F:\GameRecording\src\obs_auto_record\process_scan.py)
-- [session_engine.py](F:\GameRecording\src\obs_auto_record\session_engine.py)
-- [archive.py](F:\GameRecording\src\obs_auto_record\archive.py)
