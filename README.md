@@ -101,7 +101,7 @@ After loading the script, configure these fields:
 - `Archive Root`: destination root for archived recordings
 - `Poll Interval Ms`: how often the script scans running processes
 - `Exit Grace Period Sec`: delay before stop after the last game exits
-- `Copy Timeout Sec`: max wait for OBS to release the recording file
+- `Copy Timeout Sec`: max wait for OBS to finish writing, release, verify, and delete the recording file
 - `Verbose Logging`: enables extra log output
 
 ### Watch List Format
@@ -223,7 +223,7 @@ Check:
 - the target drive/path exists and is writable
 - the recording actually finished and OBS wrote a last recording path
 
-The script retries briefly while OBS releases the file handle.
+The script waits for the recording to stop changing, then retries briefly while OBS releases the file handle.
 
 ### Manual recording behavior seems unchanged
 
