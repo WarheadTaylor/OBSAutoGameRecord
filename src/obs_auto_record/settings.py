@@ -28,6 +28,7 @@ class ScriptSettings:
     enabled: bool = True
     watch_entries: tuple[WatchEntry, ...] = ()
     archive_root: str = ""
+    disable_archive: bool = False
     auto_delete_recordings: bool = True
     poll_interval_ms: int = 1000
     exit_grace_period_sec: int = 10

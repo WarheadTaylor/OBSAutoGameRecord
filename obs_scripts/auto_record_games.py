@@ -58,6 +58,7 @@ def script_defaults(settings) -> None:
     obs.obs_data_set_default_bool(settings, "enabled", True)
     obs.obs_data_set_default_string(settings, "watch_list", "")
     obs.obs_data_set_default_string(settings, "archive_root", "")
+    obs.obs_data_set_default_bool(settings, "disable_archive", False)
     obs.obs_data_set_default_bool(settings, "auto_delete_recordings", True)
     obs.obs_data_set_default_int(settings, "poll_interval_ms", 1000)
     obs.obs_data_set_default_int(settings, "exit_grace_period_sec", 10)
@@ -77,6 +78,8 @@ def script_properties():
         "",
         None,
     )
+    disable_archive = obs.obs_properties_add_bool(properties, "disable_archive", "Disable Auto Archive")
+    obs.obs_property_set_modified_callback(disable_archive, _on_disable_archive_modified)
     obs.obs_properties_add_bool(properties, "auto_delete_recordings", "Auto Delete Original Recording")
     obs.obs_properties_add_int(properties, "poll_interval_ms", "Poll Interval Ms", 250, 60_000, 250)
     obs.obs_properties_add_int(properties, "exit_grace_period_sec", "Exit Grace Period Sec", 0, 600, 1)
@@ -120,19 +123,31 @@ def _load_settings(obs_settings) -> ScriptSettings:
         _warn(message)
 
     archive_root = obs.obs_data_get_string(obs_settings, "archive_root").strip()
-    if not archive_root:
+    disable_archive = obs.obs_data_get_bool(obs_settings, "disable_archive")
+    if not archive_root and not disable_archive:
         _warn("Archive Root is empty; completed recordings will not be copied until it is configured.")
 
     return ScriptSettings(
         enabled=obs.obs_data_get_bool(obs_settings, "enabled"),
         watch_entries=watch_entries,
         archive_root=archive_root,
-        auto_delete_recordings=obs.obs_data_get_bool(obs_settings, "auto_delete_recordings"),
+        disable_archive=disable_archive,
+        auto_delete_recordings=obs.obs_data_get_bool(obs_settings, "auto_delete_recordings") and not disable_archive,
         poll_interval_ms=max(250, obs.obs_data_get_int(obs_settings, "poll_interval_ms")),
         exit_grace_period_sec=max(0, obs.obs_data_get_int(obs_settings, "exit_grace_period_sec")),
         copy_timeout_sec=max(1, obs.obs_data_get_int(obs_settings, "copy_timeout_sec")),
         verbose_logging=obs.obs_data_get_bool(obs_settings, "verbose_logging"),
     )
+
+
+def _on_disable_archive_modified(props, _property, settings) -> bool:
+    disable_archive = obs.obs_data_get_bool(settings, "disable_archive")
+    auto_delete = obs.obs_properties_get(props, "auto_delete_recordings")
+    if auto_delete is not None:
+        obs.obs_property_set_enabled(auto_delete, not disable_archive)
+    if disable_archive:
+        obs.obs_data_set_bool(settings, "auto_delete_recordings", False)
+    return True
 
 
 def _register_timer(interval_ms: int) -> None:
@@ -215,7 +230,7 @@ def _on_frontend_event(event: int) -> None:
     if event == obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED:
         copy_request = STATE.engine.on_recording_stopped(now)
         _log("OBS recording stopped.")
-        if copy_request is not None:
+        if copy_request is not None and not STATE.settings.disable_archive:
             _submit_copy(copy_request)
 
 
