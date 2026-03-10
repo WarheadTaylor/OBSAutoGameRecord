@@ -8,11 +8,9 @@ Windows-only OBS automation that:
 
 The project is built as an OBS Python script.
 
-## Project Layout
+## Why This Was Built
 
-- `obs_scripts/auto_record_games.py`: OBS script entrypoint
-- `src/obs_auto_record/`: core logic for parsing settings, scanning processes, session state, and archive copy
-- `tests/`: unit tests
+I wanted to be able to easily have a way to record my game sessions and them automatically archive them to my storage server after I was done. After researching a ton of different recording software out there, it made more sense to just leverage OBS as I needed to be able to record while playing in HDR, stream my screen to my friends (which means streaming the virtual camera) and safely move recordings once they had finished writing to local disk.
 
 ## Requirements
 
