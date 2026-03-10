@@ -9,7 +9,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from obs_auto_record.settings import parse_watch_list, sanitize_archive_subfolder
+from obs_auto_record.settings import ScriptSettings, parse_watch_list, sanitize_archive_subfolder
 
 
 class SettingsTests(unittest.TestCase):
@@ -35,6 +35,9 @@ class SettingsTests(unittest.TestCase):
     def test_archive_subfolder_is_sanitized(self) -> None:
         self.assertEqual(sanitize_archive_subfolder('  Elden:Ring?  '), "Elden_Ring_")
         self.assertEqual(sanitize_archive_subfolder("con"), "_con")
+
+    def test_script_settings_can_disable_archive(self) -> None:
+        self.assertTrue(ScriptSettings(disable_archive=True).disable_archive)
 
 
 if __name__ == "__main__":

@@ -99,6 +99,7 @@ After loading the script, configure these fields:
 - `Enabled`: turns automation on or off
 - `Watch List`: one game per line using `exe_name|archive_subfolder`
 - `Archive Root`: destination root for archived recordings
+- `Disable Auto Archive`: leaves recordings in OBS's normal recording location without copying them to `Archive Root`
 - `Auto Delete Original Recording`: deletes the source recording after a verified archive copy succeeds
 - `Poll Interval Ms`: how often the script scans running processes
 - `Exit Grace Period Sec`: delay before stop after the last game exits
@@ -171,6 +172,7 @@ cs2.exe|Counter-Strike 2
 ```
 
 - `Archive Root`: `D:\GameArchive`
+- `Disable Auto Archive`: `false`
 - `Auto Delete Original Recording`: `true`
 - `Poll Interval Ms`: `1000`
 - `Exit Grace Period Sec`: `10`
