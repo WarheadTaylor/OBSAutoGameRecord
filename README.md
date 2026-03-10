@@ -99,8 +99,8 @@ After loading the script, configure these fields:
 - `Enabled`: turns automation on or off
 - `Watch List`: one game per line using `exe_name|archive_subfolder`
 - `Archive Root`: destination root for archived recordings
-- `Disable Auto Archive`: leaves recordings in OBS's normal recording location without copying them to `Archive Root`
-- `Auto Delete Original Recording`: deletes the source recording after a verified archive copy succeeds
+- `Disable Auto Archive`: leaves recordings in OBS's normal recording location without copying them to `Archive Root`, and turns off automatic deletion of the source recording
+- `Auto Delete Original Recording`: deletes the source recording after a verified archive copy succeeds; this is disabled when auto archive is turned off
 - `Poll Interval Ms`: how often the script scans running processes
 - `Exit Grace Period Sec`: delay before stop after the last game exits
 - `Copy Timeout Sec`: max wait for OBS to finish writing, release, verify, and delete the recording file

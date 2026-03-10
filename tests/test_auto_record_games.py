@@ -31,12 +31,53 @@ def _load_script_module():
     def obs_data_get_int(settings, key: str) -> int:
         return int(settings.get(key, 0))
 
+    def obs_data_set_bool(settings, key: str, value: bool) -> None:
+        settings[key] = value
+
     def script_log(level: int, message: str) -> None:
         logs.append((level, message))
+
+    def obs_properties_create():
+        return {}
+
+    def _add_property(props, kind: str, key: str, label: str):
+        prop = {"type": kind, "key": key, "label": label, "enabled": True, "modified_callback": None}
+        props[key] = prop
+        return prop
+
+    def obs_properties_add_bool(props, key: str, label: str):
+        return _add_property(props, "bool", key, label)
+
+    def obs_properties_add_text(props, key: str, label: str, _kind: int):
+        return _add_property(props, "text", key, label)
+
+    def obs_properties_add_path(props, key: str, label: str, _kind: int, _filter: str, _default):
+        return _add_property(props, "path", key, label)
+
+    def obs_properties_add_int(props, key: str, label: str, _low: int, _high: int, _step: int):
+        return _add_property(props, "int", key, label)
+
+    def obs_property_set_modified_callback(prop, callback) -> None:
+        prop["modified_callback"] = callback
+
+    def obs_properties_get(props, key: str):
+        return props.get(key)
+
+    def obs_property_set_enabled(prop, enabled: bool) -> None:
+        prop["enabled"] = enabled
 
     obs_module.obs_data_get_string = obs_data_get_string
     obs_module.obs_data_get_bool = obs_data_get_bool
     obs_module.obs_data_get_int = obs_data_get_int
+    obs_module.obs_data_set_bool = obs_data_set_bool
+    obs_module.obs_properties_create = obs_properties_create
+    obs_module.obs_properties_add_bool = obs_properties_add_bool
+    obs_module.obs_properties_add_text = obs_properties_add_text
+    obs_module.obs_properties_add_path = obs_properties_add_path
+    obs_module.obs_properties_add_int = obs_properties_add_int
+    obs_module.obs_property_set_modified_callback = obs_property_set_modified_callback
+    obs_module.obs_properties_get = obs_properties_get
+    obs_module.obs_property_set_enabled = obs_property_set_enabled
     obs_module.script_log = script_log
     obs_module.logs = logs
 
@@ -93,6 +134,7 @@ class AutoRecordGamesTests(unittest.TestCase):
         )
 
         self.assertTrue(settings.disable_archive)
+        self.assertFalse(settings.auto_delete_recordings)
         self.assertEqual(obs_module.logs, [])
 
     def test_recording_stop_skips_archive_submission_when_disabled(self) -> None:
@@ -109,6 +151,23 @@ class AutoRecordGamesTests(unittest.TestCase):
             module._on_frontend_event(module.obs.OBS_FRONTEND_EVENT_RECORDING_STOPPED)
 
         submit_copy.assert_not_called()
+
+    def test_disable_archive_callback_turns_off_and_disables_auto_delete(self) -> None:
+        module, _obs_module = _load_script_module()
+        properties = module.script_properties()
+        settings = {
+            "disable_archive": True,
+            "auto_delete_recordings": True,
+        }
+
+        disable_archive = properties["disable_archive"]
+        callback = disable_archive["modified_callback"]
+        self.assertIsNotNone(callback)
+
+        callback(properties, disable_archive, settings)
+
+        self.assertFalse(settings["auto_delete_recordings"])
+        self.assertFalse(properties["auto_delete_recordings"]["enabled"])
 
 
 if __name__ == "__main__":
